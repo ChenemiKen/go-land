@@ -20,6 +20,8 @@ func AddValuees(x, y int) int {
 	return x + y
 }
 
+func Divide(w http.ResponseWriter, r *http.Request)
+
 func main() {
 	// http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 	// 	n, err := fmt.Fprintf(w, "Hello, go web!")
