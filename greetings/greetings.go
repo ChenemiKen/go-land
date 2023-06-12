@@ -10,6 +10,7 @@ func Hello(name string) (string, error){
 		return "", errors.New("empty name")
 	}
 	message := fmt.Sprintf(randonFormat(), name)
+	// message := fmt.Sprintf(randonFormat())
 	return message, nil
 }
 
