@@ -70,6 +70,9 @@
                     <a class="nav-link" href="/search-availability">Book Now</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="/make-reservation">Reservation</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="/contact">Contact</a>
                 </li>
 
@@ -143,6 +146,18 @@
                 confirmButtonText: confirmationButtonText
             })
         }
+
+        {{with .Flash }}
+        notify("{{.}}", "success")
+        {{end}}
+
+        {{with .Error }}
+        notify("{{.}}", "error")
+        {{end}}
+
+        {{with .Warning }}
+        notify("{{.}}", "warning")
+        {{end}}
     
         function Prompt() {
             let toast = function (c) {
