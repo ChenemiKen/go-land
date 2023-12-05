@@ -1,0 +1,12 @@
+mode: set
+github.com/chenemiken/goland/bookings/cmd/web/main.go:22.13,24.16 2 0
+github.com/chenemiken/goland/bookings/cmd/web/main.go:28.2,37.16 4 0
+github.com/chenemiken/goland/bookings/cmd/web/main.go:24.16,26.3 1 0
+github.com/chenemiken/goland/bookings/cmd/web/main.go:40.18,52.16 9 1
+github.com/chenemiken/goland/bookings/cmd/web/main.go:57.2,69.12 9 1
+github.com/chenemiken/goland/bookings/cmd/web/main.go:52.16,55.3 2 0
+github.com/chenemiken/goland/bookings/cmd/web/middleware.go:10.53,11.71 1 0
+github.com/chenemiken/goland/bookings/cmd/web/middleware.go:11.71,14.3 2 0
+github.com/chenemiken/goland/bookings/cmd/web/middleware.go:17.45,27.2 3 1
+github.com/chenemiken/goland/bookings/cmd/web/middleware.go:29.50,31.2 1 1
+github.com/chenemiken/goland/bookings/cmd/web/routes.go:12.49,37.2 18 1
