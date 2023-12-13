@@ -21,6 +21,8 @@ func TestAddDefaultData(t *testing.T) {
 	}
 }
 
+func TestRenderTemplate()
+
 func getSession() (*http.Request, error) {
 	r, err := http.NewRequest("GET", "/some-url", nil)
 	if err != nil {
