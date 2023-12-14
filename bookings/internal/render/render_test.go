@@ -9,21 +9,23 @@ import (
 
 func TestAddDefaultData(t *testing.T) {
 	var td models.TemplateData
+
 	r, err := getSession()
 	if err != nil {
 		t.Error(err)
 	}
-	session.Put(r.Context(), "Flash", "123")
+	session.Put(r.Context(), "flash", "123")
+
 	result := AddDefaultData(&td, r)
 
 	if result.Flash != "123" {
-		t.Error("flash value not 123")
+		t.Errorf("flash value not 123 but %s", result.Flash)
 	}
 }
 
 func TestRenderTemplate(t *testing.T) {
-	t.Error("error")
 	pathToTemplates = "./../../templates"
+
 	tc, err := CreateTemplateCache()
 	if err != nil {
 		t.Error("failed to create template cache")
@@ -39,7 +41,7 @@ func TestRenderTemplate(t *testing.T) {
 
 	err = RenderTemplate(&ww, r, "home.page.html", &models.TemplateData{})
 	if err != nil {
-		t.Error("error writing template to browser")
+		t.Error("error writing template to browser", err)
 	}
 
 	err = RenderTemplate(&ww, r, "non-existent.page.html", &models.TemplateData{})
@@ -71,17 +73,3 @@ func getSession() (*http.Request, error) {
 	r = r.WithContext(ctx)
 	return r, nil
 }
-
-type myWriter struct{}
-
-func (w *myWriter) Header() http.Header {
-	var h http.Header
-	return h
-}
-
-func (w *myWriter) Write([]byte) (int, error) {
-	i := 1
-	return i, nil
-}
-
-func (w *myWriter) WriteHeader(statusCode int) {}

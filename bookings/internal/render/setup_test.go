@@ -2,6 +2,7 @@ package render
 
 import (
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -10,10 +11,11 @@ import (
 )
 
 var session *scs.SessionManager
-
 var testApp config.AppConfig
 
 func TestMain(m *testing.M) {
+
+	testApp.InProduction = false
 
 	session = scs.New()
 	session.Lifetime = 24 * time.Hour
@@ -24,4 +26,20 @@ func TestMain(m *testing.M) {
 	testApp.Session = session
 
 	app = &testApp
+
+	os.Exit(m.Run())
 }
+
+type myWriter struct{}
+
+func (w *myWriter) Header() http.Header {
+	var h http.Header
+	return h
+}
+
+func (w *myWriter) Write(b []byte) (int, error) {
+	i := len(b)
+	return i, nil
+}
+
+func (w *myWriter) WriteHeader(statusCode int) {}
