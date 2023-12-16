@@ -3,9 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
+	"github.com/chenemiken/goland/bookings/helpers"
 	"github.com/chenemiken/goland/bookings/internal/config"
 	"github.com/chenemiken/goland/bookings/internal/forms"
 	"github.com/chenemiken/goland/bookings/internal/models"
@@ -29,20 +29,11 @@ func NewHandlers(r *Repository) {
 }
 
 func (m *Repository) Home(w http.ResponseWriter, r *http.Request) {
-	remoteIp := r.RemoteAddr
-	m.App.Session.Put(r.Context(), "remoteIp", remoteIp)
 	render.RenderTemplate(w, r, "home.page.html", &models.TemplateData{})
 }
 
 func (m *Repository) About(w http.ResponseWriter, r *http.Request) {
-	var stringMap = make(map[string]string)
-	stringMap["test"] = "Hello dean"
-
-	stringMap["remoteIp"] = m.App.Session.GetString(r.Context(), "remoteIp")
-
-	render.RenderTemplate(w, r, "about.page.html", &models.TemplateData{
-		StringMap: stringMap,
-	})
+	render.RenderTemplate(w, r, "about.page.html", &models.TemplateData{})
 }
 
 func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +50,7 @@ func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
 func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		log.Println(err)
+		helpers.ServerError(w, err)
 		return
 	}
 
@@ -118,9 +109,10 @@ func (m *Repository) PostAvailabilityJson(w http.ResponseWriter, r *http.Request
 	}
 	out, err := json.MarshalIndent(resp, "", "     ")
 	if err != nil {
-		log.Println(err)
+		helpers.ServerError(w, err)
+		return
 	}
-	log.Println(string(out))
+	m.App.InfoLog.Println(string(out))
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(out)
 }
@@ -132,7 +124,7 @@ func (m *Repository) Contact(w http.ResponseWriter, r *http.Request) {
 func (m *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request) {
 	reservation, ok := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
 	if !ok {
-		log.Println("reservation not found")
+		m.App.ErrorLog.Println("reservation not found")
 		m.App.Session.Put(r.Context(), "error", "no reservation found")
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
