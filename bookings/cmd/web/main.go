@@ -11,6 +11,7 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/chenemiken/goland/bookings/helpers"
 	"github.com/chenemiken/goland/bookings/internal/config"
+	"github.com/chenemiken/goland/bookings/internal/drivers"
 	"github.com/chenemiken/goland/bookings/internal/handlers"
 	"github.com/chenemiken/goland/bookings/internal/models"
 	"github.com/chenemiken/goland/bookings/internal/render"
@@ -24,10 +25,11 @@ var infoLog *log.Logger
 var errorLog *log.Logger
 
 func main() {
-	err := run()
+	db, err := run()
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.SQL.Close()
 
 	fmt.Printf((fmt.Sprintf("Starting application on port %s \n", portNumber)))
 	// _ = http.ListenAndServe(portNumber, nil)
@@ -41,8 +43,11 @@ func main() {
 	log.Fatal(err)
 }
 
-func run() error {
+func run() (*drivers.DB, error) {
 	gob.Register(models.Reservation{})
+	gob.Register(models.User{})
+	gob.Register(models.Room{})
+	gob.Register(models.Restriction{})
 
 	app.InProduction = false
 
@@ -61,21 +66,28 @@ func run() error {
 	tc, err := render.CreateTemplateCache()
 	if err != nil {
 		log.Fatal("cannot create template cache")
-		return err
+		return nil, err
 	}
 
 	app.TemplateCache = tc
 	app.UseCache = false
 	app.Session = &session
 
-	render.NewTemplates(&app)
+	db, err := drivers.ConnectSQL(("host=localhost port=5432 dbname=bookings user=kennethakor password="))
+	if err != nil {
+		log.Fatal("Can not connect to db... Dying.")
+		return nil, err
+	}
+	app.InfoLog.Println("Connected to the database!")
 
-	repo := handlers.NewRepo(&app)
+	render.NewRenderer(&app)
+
+	repo := handlers.NewRepo(db, &app)
 	handlers.NewHandlers(repo)
 	helpers.NewHelpers(&app)
 
 	// http.HandleFunc("/", handlers.Repo.Home)
 	// http.HandleFunc("/about", handlers.Repo.About)
 
-	return nil
+	return db, nil
 }
