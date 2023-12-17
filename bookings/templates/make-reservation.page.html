@@ -48,9 +48,31 @@
                         {{end}}
                         <input class='form-control 
                             {{with .Form.Errors.Get "phone"}} is-invalid {{end}}' 
-                            id="phone" autocomplete="off" type='email'
+                            id="phone" autocomplete="off" type='text'
                             name='phone' value="{{$res.Phone}}" required>
                     </div>
+
+                    <div class="form-group">
+                        <label for="start_date">Start date:</label>
+                        {{with .Form.Errors.Get "start_date"}}
+                            <small class="text-danger">{{.}}</small>
+                        {{end}}
+                        <input class='form-control 
+                            {{with .Form.Errors.Get "start_date"}} is-invalid {{end}}' 
+                            id="start_date" autocomplete="off" type='date'
+                            name='start_date' value="{{$res.StartDate}}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="start_date">End date:</label>
+                        {{with .Form.Errors.Get "end_date"}}
+                            <small class="text-danger">{{.}}</small>
+                        {{end}}
+                        <input class='form-control 
+                            {{with .Form.Errors.Get "end_date"}} is-invalid {{end}}' 
+                            id="end_date" autocomplete="off" type='date'
+                            name='end_date' value="{{$res.EndDate}}" required>
+                    </div>
+                    <input type="hidden" name="room_id" value="2">
 
                     <hr>
                     <input type="submit" class="btn btn-primary" value="Make Reservation">
