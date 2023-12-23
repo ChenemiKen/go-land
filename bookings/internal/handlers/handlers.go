@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -80,7 +79,6 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("---", resvn.Room)
 	resvn.FirstName = r.Form.Get("first_name")
 	resvn.LastName = r.Form.Get("last_name")
 	resvn.Email = r.Form.Get("email")
@@ -188,21 +186,32 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 }
 
 type jsonResponse struct {
-	OK      bool   `json: "ok"`
-	Message string `json: "message"`
+	OK        bool      `json:"ok"`
+	StartDate time.Time `json:"start"`
+	EndDate   time.Time `json:"end"`
+	RoomID    int       `json:"room_id"`
 }
 
 func (m *Repository) PostAvailabilityJson(w http.ResponseWriter, r *http.Request) {
+	sd := r.PostForm.Get("start")
+	ed := r.PostForm.Get("end")
+	startDate, _ := time.Parse("2006-01-02", sd)
+	endDate, _ := time.Parse("2006-01-02", ed)
+	roomId, _ := strconv.Atoi(r.PostForm.Get("room_id"))
+
+	available, _ := m.DB.SearchAvailabilityByDatesByRoomId(startDate, endDate, roomId)
+
 	resp := jsonResponse{
-		OK:      true,
-		Message: "hello, world!",
+		OK:        available,
+		StartDate: startDate,
+		EndDate:   endDate,
+		RoomID:    roomId,
 	}
 	out, err := json.MarshalIndent(resp, "", "     ")
 	if err != nil {
 		helpers.ServerError(w, err)
 		return
 	}
-	m.App.InfoLog.Println(string(out))
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(out)
 }
@@ -245,11 +254,29 @@ func (m *Repository) ChooseRoom(w http.ResponseWriter, r *http.Request) {
 
 	res, ok := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
 	if !ok {
-		helpers.ServerError(w, errors.New("unable to get resevation details from session"))
+		helpers.ServerError(w, errors.New("unable to get reservation details from session"))
 	}
 
 	res.RoomID = roomId
 
 	m.App.Session.Put(r.Context(), "reservation", res)
+	http.Redirect(w, r, "/make-reservation", http.StatusSeeOther)
+}
+
+func (m *Repository) BookRoom(w http.ResponseWriter, r *http.Request) {
+	roomID, _ := strconv.Atoi(r.URL.Query().Get("id"))
+	sd := r.URL.Query().Get("s")
+	ed := r.URL.Query().Get("e")
+
+	startDate, _ := time.Parse("2006-01-02", sd)
+	endDate, _ := time.Parse("2006-01-02", ed)
+
+	reservation := models.Reservation{
+		RoomID:    roomID,
+		StartDate: startDate,
+		EndDate:   endDate,
+	}
+
+	m.App.Session.Put(r.Context(), "reservation", reservation)
 	http.Redirect(w, r, "/make-reservation", http.StatusSeeOther)
 }
