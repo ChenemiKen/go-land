@@ -32,6 +32,13 @@ func NewRepo(db *drivers.DB, a *config.AppConfig) *Repository {
 	}
 }
 
+func NewTestRepo(a *config.AppConfig) *Repository {
+	return &Repository{
+		App: a,
+		DB:  dbrepo.NewTestingRepo(a),
+	}
+}
+
 func NewHandlers(r *Repository) {
 	Repo = r
 }
@@ -45,12 +52,18 @@ func (m *Repository) About(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
-	resvn := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
+	resvn, ok := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
+	if !ok {
+		m.App.Session.Put(r.Context(), "error", "could not get session from session")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
+	}
 	data := make(map[string]interface{})
 
 	room, err := m.DB.GetRoomById(resvn.RoomID)
 	if err != nil {
-		helpers.ServerError(w, err)
+		m.App.Session.Put(r.Context(), "error", "could not get room by id")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 	resvn.Room = room
