@@ -85,20 +85,46 @@ func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
-	resvn := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
 	err := r.ParseForm()
 	if err != nil {
-		helpers.ServerError(w, err)
+		m.App.Session.Put(r.Context(), "error", "could not parse form")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 
-	resvn.FirstName = r.Form.Get("first_name")
-	resvn.LastName = r.Form.Get("last_name")
-	resvn.Email = r.Form.Get("email")
-	resvn.Phone = r.Form.Get("phone")
+	sd := r.Form.Get("start_date")
+	ed := r.Form.Get("end_date")
 
-	sd := resvn.StartDate.Format("2006-01-02")
-	ed := resvn.EndDate.Format("2006-01-02")
+	startDate, err := time.Parse("2006-01-02", sd)
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "could not parse start_date")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
+	}
+
+	endDate, err := time.Parse("2006-01-02", ed)
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "could not parse end_date")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
+	}
+
+	roomID, err := strconv.Atoi(r.Form.Get("room_id"))
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "could not parse room_id")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
+	}
+
+	reservation := models.Reservation{
+		FirstName: r.Form.Get("first_name"),
+		LastName:  r.Form.Get("last_name"),
+		Email:     r.Form.Get("email"),
+		Phone:     r.Form.Get("phone"),
+		StartDate: startDate,
+		EndDate:   endDate,
+		RoomID:    roomID,
+	}
 
 	stringData := make(map[string]string)
 	stringData["start_date"] = sd
@@ -112,7 +138,8 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 
 	if !form.Valid() {
 		data := make(map[string]interface{})
-		data["reservation"] = resvn
+		data["reservation"] = reservation
+		http.Error(w, "invalid form input", http.StatusSeeOther)
 		render.Template(w, r, "make-reservation.page.html", &models.TemplateData{
 			Form:      form,
 			Data:      data,
@@ -121,26 +148,28 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newResID, err := m.DB.InsertReservation(resvn)
+	newResID, err := m.DB.InsertReservation(reservation)
 	if err != nil {
-		helpers.ServerError(w, err)
+		m.App.Session.Put(r.Context(), "error", "could not insert reservation to DB")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 	restriction := models.RoomRestrictions{
-		StartDate:     resvn.StartDate,
-		EndDate:       resvn.EndDate,
-		RoomID:        resvn.RoomID,
+		StartDate:     reservation.StartDate,
+		EndDate:       reservation.EndDate,
+		RoomID:        reservation.RoomID,
 		RestrictionID: 1,
 		ReservationID: newResID,
 	}
 
 	err = m.DB.InsertRoomRestriction(restriction)
 	if err != nil {
-		helpers.ServerError(w, err)
+		m.App.Session.Put(r.Context(), "error", "could not insert restriction to DB")
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 
-	m.App.Session.Put(r.Context(), "reservation", resvn)
+	m.App.Session.Put(r.Context(), "reservation", reservation)
 
 	http.Redirect(w, r, "reservation-summary", http.StatusSeeOther)
 }
