@@ -2,6 +2,7 @@ package dbrepo
 
 import (
 	"errors"
+	"log"
 	"time"
 
 	"github.com/chenemiken/goland/bookings/internal/models"
@@ -27,6 +28,13 @@ func (m *testDBRepo) InsertRoomRestriction(rr models.RoomRestrictions) error {
 
 func (m *testDBRepo) SearchAvailabilityByDatesByRoomId(startDate,
 	endDate time.Time, roomId int) (bool, error) {
+
+	if roomId == 2 {
+		return true, nil
+	}
+	if roomId == 3 {
+		return false, errors.New("error-room3")
+	}
 	return false, nil
 }
 
@@ -34,6 +42,34 @@ func (m *testDBRepo) SearchAvailabilityForAllRooms(start, end time.Time) (
 	[]models.Room, error) {
 
 	var rooms []models.Room
+	sd, err := time.Parse("2006-01-02", "2025-01-01")
+	if err != nil {
+		return nil, err
+	}
+	ed, err := time.Parse("2006-01-02", "2025-12-12")
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	if start == sd && end == ed {
+		room := models.Room{
+			RoomName: "General's quarters",
+		}
+		rooms = append(rooms, room)
+	}
+
+	sd, err = time.Parse("2006-01-02", "2026-01-01")
+	if err != nil {
+		return nil, err
+	}
+	ed, err = time.Parse("2006-01-02", "2026-12-12")
+	if err != nil {
+		return nil, err
+	}
+	if start == sd && end == ed {
+		return rooms, errors.New("failed to search rooms")
+	}
+
 	return rooms, nil
 }
 
