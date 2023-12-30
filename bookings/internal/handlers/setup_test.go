@@ -37,6 +37,13 @@ func TestMain(m *testing.M) {
 	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 	app.ErrorLog = errorLog
 
+	mailChan := make(chan models.MailData)
+	app.MailChan = mailChan
+
+	defer close(app.MailChan)
+
+	listenForMail()
+
 	session = *scs.New()
 	session.Lifetime = 24 * time.Hour
 	session.Cookie.Persist = true
@@ -135,4 +142,12 @@ func CreateTestTemplateCache() (map[string]*template.Template, error) {
 	}
 
 	return myCache, nil
+}
+
+func listenForMail() {
+	go func() {
+		for {
+			_ = <-app.MailChan
+		}
+	}()
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/smtp"
 	"os"
 	"time"
 
@@ -32,13 +31,9 @@ func main() {
 	}
 	defer db.SQL.Close()
 
-	from := "hello@ma.co"
-	mailAuth := smtp.PlainAuth("", from, "", "localhost")
-	err = smtp.SendMail("localhost:1025", mailAuth,
-		from, []string{"me@grt.com"}, []byte("Hello, world!"))
-	if err != nil {
-		log.Println(err)
-	}
+	defer close(app.MailChan)
+
+	listenForMail()
 
 	fmt.Printf((fmt.Sprintf("Starting application on port %s \n", portNumber)))
 	// _ = http.ListenAndServe(portNumber, nil)
@@ -94,6 +89,9 @@ func run() (*drivers.DB, error) {
 	repo := handlers.NewRepo(db, &app)
 	handlers.NewHandlers(repo)
 	helpers.NewHelpers(&app)
+
+	mailChan := make(chan models.MailData)
+	app.MailChan = mailChan
 
 	// http.HandleFunc("/", handlers.Repo.Home)
 	// http.HandleFunc("/about", handlers.Repo.About)
