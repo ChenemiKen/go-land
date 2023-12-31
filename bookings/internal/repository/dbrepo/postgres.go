@@ -196,7 +196,7 @@ func (m *postgresDBRepo) AllReservations() ([]models.Reservation, error) {
 
 	query := `select r.id, r.first_name, r.last_name, r.email, r.phone,
 		r.start_date, r.end_date, r.room_id, r.created_at, r.updated_at,
-		rm.id, rm.room_name
+		r.processed, rm.id, rm.room_name
 		from reservations r
 		left join rooms rm on (r.room_id = rm.id)
 		order by r.start_date asc;`
@@ -210,7 +210,46 @@ func (m *postgresDBRepo) AllReservations() ([]models.Reservation, error) {
 		var r models.Reservation
 		err := rows.Scan(&r.ID, &r.FirstName, &r.LastName, &r.Email, &r.Phone,
 			&r.StartDate, &r.EndDate, &r.RoomID, &r.CreatedAt, &r.UpdatedAt,
-			&r.Room.ID, &r.Room.RoomName)
+			&r.Processed, &r.Room.ID, &r.Room.RoomName)
+
+		if err != nil {
+			return reservations, err
+		}
+
+		reservations = append(reservations, r)
+	}
+
+	if err = rows.Err(); err != nil {
+		return reservations, err
+	}
+
+	return reservations, nil
+}
+
+func (m *postgresDBRepo) AllNewReservations() ([]models.Reservation, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var reservations []models.Reservation
+
+	query := `select r.id, r.first_name, r.last_name, r.email, r.phone,
+		r.start_date, r.end_date, r.room_id, r.created_at, r.updated_at,
+		r.processed, rm.id, rm.room_name
+		from reservations r
+		left join rooms rm on (r.room_id = rm.id)
+		where processed = 0
+		order by r.start_date asc;`
+
+	rows, err := m.DB.QueryContext(ctx, query)
+	if err != nil {
+		return reservations, err
+	}
+
+	for rows.Next() {
+		var r models.Reservation
+		err := rows.Scan(&r.ID, &r.FirstName, &r.LastName, &r.Email, &r.Phone,
+			&r.StartDate, &r.EndDate, &r.RoomID, &r.CreatedAt, &r.UpdatedAt,
+			&r.Processed, &r.Room.ID, &r.Room.RoomName)
 
 		if err != nil {
 			return reservations, err
