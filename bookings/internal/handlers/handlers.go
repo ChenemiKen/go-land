@@ -463,3 +463,27 @@ func (m *Repository) AdminAllReservations(w http.ResponseWriter, r *http.Request
 func (m *Repository) AdminReservationCalendar(w http.ResponseWriter, r *http.Request) {
 	render.Template(w, r, "admin-reservation-calendar.page.html", &models.TemplateData{})
 }
+
+func (m *Repository) AdminShowReservation(w http.ResponseWriter, r *http.Request) {
+	exploded := strings.Split(r.RequestURI, "/")
+	id, err := strconv.Atoi(exploded[4])
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+
+	stringMap := make(map[string]string)
+	stringMap["src"] = exploded[3]
+
+	res, err := m.DB.GetReservationByID(id)
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+	data := make(map[string]interface{})
+	data["reservation"] = res
+
+	render.Template(w, r, "admin-reservation-show.page.html", &models.TemplateData{
+		Data:      data,
+		StringMap: stringMap,
+		Form:      forms.New(nil),
+	})
+}
