@@ -8,19 +8,16 @@ import (
 
 type DatabaseRepo interface {
 	InsertReservation(res models.Reservation) (int, error)
-
 	InsertRoomRestriction(rr models.RoomRestrictions) error
 
 	SearchAvailabilityByDatesByRoomId(startDate, endDate time.Time,
 		roomId int) (bool, error)
-
 	SearchAvailabilityForAllRooms(start, end time.Time) ([]models.Room, error)
-
 	GetRoomById(id int) (models.Room, error)
 
 	GetUserByID(id int) (models.User, error)
-
 	UpdateUser(u models.User) error
-
 	Authenticate(email, testPassword string) (int, string, error)
+
+	AllReservations() ([]models.Reservation, error)
 }

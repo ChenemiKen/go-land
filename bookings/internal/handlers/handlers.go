@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/chenemiken/goland/bookings/helpers"
 	"github.com/chenemiken/goland/bookings/internal/config"
 	"github.com/chenemiken/goland/bookings/internal/drivers"
 	"github.com/chenemiken/goland/bookings/internal/forms"
@@ -342,11 +343,6 @@ func (m *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request) 
 }
 
 func (m *Repository) ChooseRoom(w http.ResponseWriter, r *http.Request) {
-	// roomId, err := strconv.Atoi(chi.URLParam(r, "id"))
-	// if err != nil {
-	// 	helpers.ServerError(w, err)
-	// 	return
-	// }
 	exploded := strings.Split(r.RequestURI, "/")
 	roomId, err := strconv.Atoi(exploded[2])
 	if err != nil {
@@ -431,4 +427,29 @@ func (m *Repository) Logout(w http.ResponseWriter, r *http.Request) {
 	_ = m.App.Session.RenewToken(r.Context())
 
 	http.Redirect(w, r, "/users/login", http.StatusSeeOther)
+}
+
+func (m *Repository) AdminDashboard(w http.ResponseWriter, r *http.Request) {
+	render.Template(w, r, "admin-dashboard.page.html", &models.TemplateData{})
+}
+func (m *Repository) AdminNewReservations(w http.ResponseWriter, r *http.Request) {
+	render.Template(w, r, "admin-new-reservations.page.html", &models.TemplateData{})
+}
+
+func (m *Repository) AdminAllReservations(w http.ResponseWriter, r *http.Request) {
+	reservations, err := m.DB.AllReservations()
+	if err != nil {
+		// m.App.Session.Put(r.Context(), "error", "could not fetch all reservations")
+		helpers.ServerError(w, err)
+		return
+	}
+	data := make(map[string]interface{})
+	data["reservations"] = reservations
+
+	render.Template(w, r, "admin-all-reservations.page.html", &models.TemplateData{
+		Data: data,
+	})
+}
+func (m *Repository) AdminReservationCalendar(w http.ResponseWriter, r *http.Request) {
+	render.Template(w, r, "admin-reservation-calendar.page.html", &models.TemplateData{})
 }
