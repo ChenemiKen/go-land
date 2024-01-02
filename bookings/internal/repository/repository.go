@@ -14,6 +14,7 @@ type DatabaseRepo interface {
 		roomId int) (bool, error)
 	SearchAvailabilityForAllRooms(start, end time.Time) ([]models.Room, error)
 	GetRoomById(id int) (models.Room, error)
+	AllRooms() ([]models.Room, error)
 
 	GetUserByID(id int) (models.User, error)
 	UpdateUser(u models.User) error
@@ -25,4 +26,7 @@ type DatabaseRepo interface {
 	UpdateReservation(u models.Reservation) error
 	DeleteReservation(id int) error
 	UpdateReservationProcessed(id, processed int) error
+
+	GetRestrictionForRoomByDate(roomId int,
+		start, end time.Time) ([]models.RoomRestrictions, error)
 }

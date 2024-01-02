@@ -18,6 +18,8 @@
         <!-- endinject -->
         <link rel="shortcut icon" href="/static/admin/images/favicon.png"/>
         <link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" type="text/css" href="https://unpkg.com/notie/dist/notie.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10.15.5/dist/sweetalert2.min.css">
         <style>
             .content-wrapper{
                 background-color: white;
@@ -144,12 +146,45 @@
     <!-- End custom js for this page-->
 
     <script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest" type="text/javascript"></script>
+    <script src="https://unpkg.com/notie"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10.15.5/dist/sweetalert2.min.js"></script>
+    <script src="/static/js/app.js"></script>
 
     {{block "js" . }}
 
     {{end}}
-    </body>
+    <script>
+        let attention = Prompt();
 
+        function notify(msg, msgType) {
+            notie.alert({
+                type: msgType,
+                text: msg,
+            })
+        }
+    
+        function notifyModal(title, text, icon, confirmationButtonText) {
+            Swal.fire({
+                title: title,
+                html: text,
+                icon: icon,
+                confirmButtonText: confirmationButtonText
+            })
+        }
+
+        {{with .Flash }}
+        notify("{{.}}", "success")
+        {{end}}
+
+        {{with .Error }}
+        notify("{{.}}", "error")
+        {{end}}
+
+        {{with .Warning }}
+        notify("{{.}}", "warning")
+        {{end}}
+    </script>
+    </body>
     </html>
 
 

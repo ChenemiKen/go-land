@@ -81,12 +81,6 @@ function Prompt() {
                 if(c.didOpen !== undefined){
                     c.didOpen()
                 }
-            },
-            preConfirm: () => {
-                return [
-                    document.getElementById('start').value,
-                    document.getElementById('end').value
-                ]
             }
         })
 
@@ -95,13 +89,13 @@ function Prompt() {
                 if(result.value !== ""){
                     if(c.callback !== undefined){
                         c.callback(result)
-                    }else {
-                        c.callback(false)
                     }
                 }
             }else{
                 c.callback(false)
             }
+        }else{
+            c.callback(false)
         }
 
         

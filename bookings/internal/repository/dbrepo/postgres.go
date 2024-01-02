@@ -312,7 +312,7 @@ func (m *postgresDBRepo) DeleteReservation(id int) error {
 
 	query := `delete from reservations where id = $1`
 
-	_, err := m.DB.ExecContext(ctx, query, 1)
+	_, err := m.DB.ExecContext(ctx, query, id)
 
 	if err != nil {
 		return err
@@ -332,4 +332,72 @@ func (m *postgresDBRepo) UpdateReservationProcessed(id, processed int) error {
 		return err
 	}
 	return nil
+}
+
+func (m *postgresDBRepo) AllRooms() ([]models.Room, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `select id, room_name, created_at, updated_at from rooms
+		order by room_name`
+
+	var rooms []models.Room
+
+	rows, err := m.DB.QueryContext(ctx, query)
+	if err != nil {
+		return rooms, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var r models.Room
+		err := rows.Scan(&r.ID, &r.RoomName, &r.CreatedAt, &r.UpdatedAt)
+		if err != nil {
+			return rooms, err
+		}
+
+		rooms = append(rooms, r)
+	}
+
+	if err = rows.Err(); err != nil {
+		return rooms, err
+	}
+
+	return rooms, nil
+}
+
+func (m *postgresDBRepo) GetRestrictionForRoomByDate(roomId int,
+	start, end time.Time) ([]models.RoomRestrictions, error) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var roomRestrictions []models.RoomRestrictions
+
+	query := `select id, coalesce(reservation_id, 0), restriction_id, room_id, 
+		start_date, end_date from room_restrictions where $1 < end_date and 
+		$2 >= start_date and room_id = $3`
+
+	rows, err := m.DB.QueryContext(ctx, query, start, end, roomId)
+	if err != nil {
+		return roomRestrictions, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var rr models.RoomRestrictions
+		err := rows.Scan(&rr.ID, &rr.ReservationID, &rr.RestrictionID,
+			&rr.RoomID, &rr.StartDate, &rr.EndDate)
+		if err != nil {
+			return roomRestrictions, err
+		}
+
+		roomRestrictions = append(roomRestrictions, rr)
+	}
+
+	if err = rows.Err(); err != nil {
+		return roomRestrictions, err
+	}
+
+	return roomRestrictions, nil
 }

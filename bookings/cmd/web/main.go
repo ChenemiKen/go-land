@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/gob"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -52,8 +53,27 @@ func run() (*drivers.DB, error) {
 	gob.Register(models.User{})
 	gob.Register(models.Room{})
 	gob.Register(models.Restriction{})
+	gob.Register(map[string]int{})
 
-	app.InProduction = false
+	inProduction := flag.Bool("production", true, "App is in production")
+	useCache := flag.Bool("cache", true, "App should use template cache")
+	dbHost := flag.String("dbhost", "localhost", "database host")
+	dbPort := flag.String("dbport", "5432", "database port")
+	dbName := flag.String("dbname", "", "database name")
+	dbUser := flag.String("dbuser", "", "database user")
+	dbPass := flag.String("dbpass", "", "database pass")
+	dbSSL := flag.String("dbssl", "disable",
+		"database ssl settings (disable, prefer, required)")
+
+	flag.Parse()
+
+	if *dbName == "" || *dbUser == "" {
+		fmt.Println("Missing database credential flags")
+		os.Exit(1)
+	}
+
+	app.InProduction = *inProduction
+	app.UseCache = *useCache
 
 	infoLog = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	app.InfoLog = infoLog
@@ -74,10 +94,12 @@ func run() (*drivers.DB, error) {
 	}
 
 	app.TemplateCache = tc
-	app.UseCache = false
 	app.Session = &session
 
-	db, err := drivers.ConnectSQL(("host=localhost port=5432 dbname=bookings user=kennethakor password="))
+	connectionString := fmt.Sprintf("host=%s port=%s dbname=%s user=%s "+
+		"password=%s sslmode=%s", *dbHost, *dbPort, *dbName, *dbUser, *dbPass,
+		*dbSSL)
+	db, err := drivers.ConnectSQL(connectionString)
 	if err != nil {
 		log.Fatal("Can not connect to db... Dying.")
 		return nil, err
